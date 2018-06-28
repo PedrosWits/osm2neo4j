@@ -29,4 +29,20 @@ public class CLITest {
     assertEquals(cli.getNeo4jUsername(), username);
     assertEquals(cli.getNeo4jPassword(), password);
   }
+
+  @Test
+  public void usesDefaults() {
+    String osmfilename = "newcastle.osm";
+
+    String[] args = new String[]{
+      "-i", osmfilename,
+    };
+
+    CLI cli = new CLI("Test CLI", args);
+
+    assertEquals(cli.getOsmFilename(), osmfilename);
+    assertEquals(cli.getNeo4jURI(), "bolt://localhost:7687");
+    assertEquals(cli.getNeo4jUsername(), "neo4j");
+    assertEquals(cli.getNeo4jPassword(), "neo4j");
+  }
 }

@@ -1,6 +1,11 @@
 package com.github.pedroswits;
 
 import org.apache.commons.cli.*;
+import org.neo4j.driver.internal.logging.JULogger;
+import org.neo4j.driver.v1.exceptions.AuthenticationException;
+import org.neo4j.logging.Level;
+
+import java.util.logging.Logger;
 
 public class CLI {
 
@@ -35,24 +40,24 @@ public class CLI {
                 "k",
                 "uri",
                 true,
-                "Neo4j graph database connection uri");
-        uri.setRequired(true);
+                "Neo4j graph database connection uri [bolt://localhost:7687]");
+        uri.setRequired(false);
         options.addOption(uri);
 
         Option username = new Option(
                 "u",
                 "username",
                 true,
-                "Username of user in neo4j graph database");
-        username.setRequired(true);
+                "Username of user in neo4j graph database [neo4j]");
+        username.setRequired(false);
         options.addOption(username);
 
         Option password = new Option(
                 "p",
                 "password",
                 true,
-                "Password of user in neo4j graph database");
-        password.setRequired(true);
+                "Password of user in neo4j graph database [neo4j]");
+        password.setRequired(false);
         options.addOption(password);
     }
 
@@ -72,9 +77,9 @@ public class CLI {
 
     protected void interrogation() {
         this.osmfilename = cmd.getOptionValue("osm-file");
-        this.uri = cmd.getOptionValue("uri");
-        this.username = cmd.getOptionValue("username");
-        this.password = cmd.getOptionValue("password");
+        this.uri = cmd.getOptionValue("uri", "bolt://localhost:7687");
+        this.username = cmd.getOptionValue("username", "neo4j");
+        this.password = cmd.getOptionValue("password", "neo4j");
     }
 
     public String getOsmFilename() {
@@ -97,9 +102,35 @@ public class CLI {
 
         CLI cli = new CLI("Import an OpenStreetMap file to Neo4j", args);
 
-        System.out.println(cli.getOsmFilename());
-        System.out.println(cli.getNeo4jURI());
-        System.out.println(cli.getNeo4jUsername());
-        System.out.println(cli.getNeo4jPassword());
+        System.out.println(
+          "Connecting to Neo4j at " +
+          cli.getNeo4jURI() +
+          " as user " +
+          cli.getNeo4jUsername());
+
+
+        Osm2Neo4j mapConverter = null;
+
+        try {
+            mapConverter =
+                    new Osm2Neo4j(cli.getNeo4jURI(),
+                                  cli.getNeo4jUsername(),
+                                  cli.getNeo4jPassword());
+
+        } catch (AuthenticationException exception) {
+            System.out.println("Authentication error: " + exception.getMessage());
+            System.exit(1);
+        }
+
+
+        String greeting = mapConverter.getGreeting("Hello World!");
+        System.out.println(greeting);
+
+        System.out.println(
+                "Closing connection to Neo4j at " +
+                        cli.getNeo4jURI() +
+                        " as user " +
+                        cli.getNeo4jUsername());
+        mapConverter.close();
     }
 }
